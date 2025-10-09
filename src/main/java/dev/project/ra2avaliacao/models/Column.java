@@ -9,6 +9,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "columns")
@@ -30,6 +31,9 @@ public class Column {
 
     @jakarta.persistence.Column(nullable = false, name = "position")
     private Integer position;
+
+    @OneToMany(mappedBy = "column", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Card> cards;
 
     @CreationTimestamp
     @jakarta.persistence.Column(name = "created_at", nullable = false, updatable = false)
