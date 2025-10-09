@@ -9,31 +9,25 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
-@Table(name = "cards")
+@Table(name = "tags")
+@NoArgsConstructor
+@AllArgsConstructor
 @Getter
 @Setter
-@AllArgsConstructor
-@NoArgsConstructor
-public class Card {
+public class Tag {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @jakarta.persistence.Column(nullable = false, name = "title")
-    private String title;
-
-    @jakarta.persistence.Column(name = "content")
-    private String content;
+    @jakarta.persistence.Column
+    private String name;
 
     @ManyToOne
-    @JoinColumn(name = "column_id", nullable = false)
-    private Column column;
-
-    @OneToMany(mappedBy = "card", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<CardTags> cardTags;
+    @JoinColumn(name = "project_id", nullable = false)
+    private Project project;
 
     @CreationTimestamp
     @jakarta.persistence.Column(name = "created_at", nullable = false, updatable = false)

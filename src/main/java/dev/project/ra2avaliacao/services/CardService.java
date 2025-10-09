@@ -4,9 +4,14 @@ import dev.project.ra2avaliacao.dtos.card.CardResponseDTO;
 import dev.project.ra2avaliacao.dtos.card.CreateCardDTO;
 import dev.project.ra2avaliacao.dtos.card.UpdateCardDTO;
 import dev.project.ra2avaliacao.models.Card;
+import dev.project.ra2avaliacao.models.CardTags;
+import dev.project.ra2avaliacao.models.CardTagsId;
 import dev.project.ra2avaliacao.models.Column;
+import dev.project.ra2avaliacao.models.Tag;
 import dev.project.ra2avaliacao.repositories.CardRepository;
+import dev.project.ra2avaliacao.repositories.CardTagsRepository;
 import dev.project.ra2avaliacao.repositories.ColumnRepository;
+import dev.project.ra2avaliacao.repositories.TagRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,12 +21,18 @@ import java.util.stream.Collectors;
 public class CardService {
     private final CardRepository cardRepository;
     private final ColumnRepository columnRepository;
+    private final CardTagsRepository cardTagsRepository;
+    private final TagRepository tagRepository;
     private final ProjectPermissionValidator permissionValidator;
 
-    public CardService(CardRepository cardRepository, ProjectPermissionValidator permissionValidator, ColumnRepository columnRepository) {
+    public CardService(CardRepository cardRepository, ProjectPermissionValidator permissionValidator,
+                      ColumnRepository columnRepository, CardTagsRepository cardTagsRepository,
+                      TagRepository tagRepository) {
         this.cardRepository = cardRepository;
         this.permissionValidator = permissionValidator;
         this.columnRepository = columnRepository;
+        this.cardTagsRepository = cardTagsRepository;
+        this.tagRepository = tagRepository;
     }
 
     public CardResponseDTO create(String columnId, CreateCardDTO createCardDTO, String userId) {
@@ -99,6 +110,54 @@ public class CardService {
         }
 
         cardRepository.delete(cardToDelete);
+    }
+
+    public void assignTagToCard(String cardId, String tagId, String userId) {
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new RuntimeException("Card not found"));
+
+        String projectId = card.getColumn().getProject().getId();
+        if (!permissionValidator.isMember(projectId, userId)) {
+            throw new RuntimeException("User does not have permission to edit this project");
+        }
+
+        Tag tag = tagRepository.findById(tagId)
+                .orElseThrow(() -> new RuntimeException("Tag not found"));
+
+        // Verificar se a tag pertence ao mesmo projeto do card
+        if (!tag.getProject().getId().equals(projectId)) {
+            throw new RuntimeException("Tag does not belong to the same project as the card");
+        }
+
+        // Verificar se a tag já está atribuída ao card
+        CardTagsId cardTagsId = new CardTagsId(cardId, tagId);
+        if (cardTagsRepository.existsById(cardTagsId)) {
+            throw new RuntimeException("Tag is already assigned to this card");
+        }
+
+        CardTags cardTags = new CardTags();
+        cardTags.setId(cardTagsId);
+        cardTags.setCard(card);
+        cardTags.setTag(tag);
+
+        cardTagsRepository.save(cardTags);
+    }
+
+    public void removeTagFromCard(String cardId, String tagId, String userId) {
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new RuntimeException("Card not found"));
+
+        String projectId = card.getColumn().getProject().getId();
+        if (!permissionValidator.isMember(projectId, userId)) {
+            throw new RuntimeException("User does not have permission to edit this project");
+        }
+
+        CardTagsId cardTagsId = new CardTagsId(cardId, tagId);
+        if (!cardTagsRepository.existsById(cardTagsId)) {
+            throw new RuntimeException("Tag is not assigned to this card");
+        }
+
+        cardTagsRepository.deleteById(cardTagsId);
     }
 
     private CardResponseDTO convertToResponseDto(Card card) {

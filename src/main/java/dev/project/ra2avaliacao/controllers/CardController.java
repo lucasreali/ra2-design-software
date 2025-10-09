@@ -57,4 +57,28 @@ public class CardController {
         cardService.delete(cardId, user.getId());
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/{cardId}/tags/{tagId}")
+    public ResponseEntity<Void> assignTag(@PathVariable String cardId,
+                                         @PathVariable String tagId,
+                                         @AuthenticationPrincipal User user) {
+        try {
+            cardService.assignTagToCard(cardId, tagId, user.getId());
+            return ResponseEntity.status(HttpStatus.CREATED).build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+    }
+
+    @DeleteMapping("/{cardId}/tags/{tagId}")
+    public ResponseEntity<Void> removeTag(@PathVariable String cardId,
+                                         @PathVariable String tagId,
+                                         @AuthenticationPrincipal User user) {
+        try {
+            cardService.removeTagFromCard(cardId, tagId, user.getId());
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+    }
 }
