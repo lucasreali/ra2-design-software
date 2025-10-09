@@ -1,4 +1,4 @@
-package dev.project.ra2avaliacao.dtos;
+package dev.project.ra2avaliacao.dtos.user;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

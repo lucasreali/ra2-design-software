@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Cards {
+public class Card {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
@@ -25,7 +25,11 @@ public class Cards {
     private String title;
 
     @jakarta.persistence.Column(name = "content")
-    private String description;
+    private String content;
+
+    @ManyToOne
+    @JoinColumn(name = "column_id", nullable = false)
+    private Column column;
 
     @CreationTimestamp
     @jakarta.persistence.Column(name = "created_at", nullable = false, updatable = false)

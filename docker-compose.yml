@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:17.5-alpine
+    container_name: postgres_ra2_avaliacao
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ra2_avaliacao
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+    postgres_data:
