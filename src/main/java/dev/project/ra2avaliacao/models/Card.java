@@ -1,7 +1,6 @@
 package dev.project.ra2avaliacao.models;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -15,7 +14,6 @@ import java.util.List;
 @Table(name = "cards")
 @Getter
 @Setter
-@AllArgsConstructor
 @NoArgsConstructor
 public class Card {
     @Id
@@ -42,4 +40,37 @@ public class Card {
     @UpdateTimestamp
     @jakarta.persistence.Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    // Construtor privado que recebe o Builder
+    private Card(CardBuilder builder) {
+        this.title = builder.title;
+        this.content = builder.content;
+        this.column = builder.column;
+    }
+
+    // Classe Builder estática interna
+    public static class CardBuilder {
+        private String title;
+        private String content;
+        private Column column;
+
+        public CardBuilder title(String title) {
+            this.title = title;
+            return this;
+        }
+
+        public CardBuilder content(String content) {
+            this.content = content;
+            return this;
+        }
+
+        public CardBuilder column(Column column) {
+            this.column = column;
+            return this;
+        }
+
+        public Card build() {
+            return new Card(this);
+        }
+    }
 }

@@ -28,10 +28,11 @@ public class UserService {
             throw new RuntimeException("Email already exists");
         }
 
-        User user = new User();
-        user.setName(createUserDTO.getName());
-        user.setEmail(createUserDTO.getEmail());
-        user.setPassword(passwordEncoder.encode(createUserDTO.getPassword()));
+        User user = new User.UserBuilder()
+                .name(createUserDTO.getName())
+                .email(createUserDTO.getEmail())
+                .password(passwordEncoder.encode(createUserDTO.getPassword()))
+                .build();
 
         User savedUser = userRepository.save(user);
         return convertToResponseDTO(savedUser);

@@ -43,14 +43,15 @@ public class CardService {
             throw new RuntimeException("User does not have permission to edit this project");
         }
 
-        Card newCard = new Card();
-        newCard.setTitle(createCardDTO.getTitle());
-        newCard.setColumn(targetColumn);
+        Card.CardBuilder cardBuilder = new Card.CardBuilder()
+                .title(createCardDTO.getTitle())
+                .column(targetColumn);
 
         if (createCardDTO.getContent() != null && !createCardDTO.getContent().isEmpty()) {
-            newCard.setContent(createCardDTO.getContent());
+            cardBuilder.content(createCardDTO.getContent());
         }
 
+        Card newCard = cardBuilder.build();
         Card savedCard = cardRepository.save(newCard);
         return convertToResponseDto(savedCard);
     }

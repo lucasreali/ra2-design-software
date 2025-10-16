@@ -1,7 +1,6 @@
 package dev.project.ra2avaliacao.models;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -15,7 +14,6 @@ import java.util.List;
 @Table(name = "columns")
 @Getter
 @Setter
-@AllArgsConstructor
 @NoArgsConstructor
 public class Column {
     @Id
@@ -42,4 +40,37 @@ public class Column {
     @UpdateTimestamp
     @jakarta.persistence.Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    // Construtor privado que recebe o Builder
+    private Column(ColumnBuilder builder) {
+        this.name = builder.name;
+        this.project = builder.project;
+        this.position = builder.position;
+    }
+
+    // Classe Builder estática interna
+    public static class ColumnBuilder {
+        private String name;
+        private Project project;
+        private Integer position;
+
+        public ColumnBuilder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public ColumnBuilder project(Project project) {
+            this.project = project;
+            return this;
+        }
+
+        public ColumnBuilder position(Integer position) {
+            this.position = position;
+            return this;
+        }
+
+        public Column build() {
+            return new Column(this);
+        }
+    }
 }

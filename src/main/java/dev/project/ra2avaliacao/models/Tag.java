@@ -1,7 +1,6 @@
 package dev.project.ra2avaliacao.models;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -13,7 +12,6 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "tags")
 @NoArgsConstructor
-@AllArgsConstructor
 @Getter
 @Setter
 public class Tag {
@@ -36,4 +34,30 @@ public class Tag {
     @UpdateTimestamp
     @jakarta.persistence.Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    // Construtor privado que recebe o Builder
+    private Tag(TagBuilder builder) {
+        this.name = builder.name;
+        this.project = builder.project;
+    }
+
+    // Classe Builder estática interna
+    public static class TagBuilder {
+        private String name;
+        private Project project;
+
+        public TagBuilder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public TagBuilder project(Project project) {
+            this.project = project;
+            return this;
+        }
+
+        public Tag build() {
+            return new Tag(this);
+        }
+    }
 }

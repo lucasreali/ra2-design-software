@@ -38,9 +38,10 @@ public class ProjectService {
 
         User user = userOptional.get();
 
-        Project project = new Project();
-        project.setName(createProjectDTO.getName());
-        project.setDescription(createProjectDTO.getDescription());
+        Project project = new Project.ProjectBuilder()
+                .name(createProjectDTO.getName())
+                .description(createProjectDTO.getDescription())
+                .build();
 
         Project savedProject = projectRepository.save(project);
 

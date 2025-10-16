@@ -35,10 +35,11 @@ public class ColumnService {
 
         List<Column> columns = columnRepository.findAllByProjectId(projectId);
 
-        Column column = new Column();
-        column.setName(createColumnDTO.getName());
-        column.setPosition(columns.size() + 1);
-        column.setProject(project);
+        Column column = new Column.ColumnBuilder()
+                .name(createColumnDTO.getName())
+                .position(columns.size() + 1)
+                .project(project)
+                .build();
 
         columnRepository.save(column);
 

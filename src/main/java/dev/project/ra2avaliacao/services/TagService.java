@@ -37,9 +37,10 @@ public class TagService {
             throw new RuntimeException("Tag with this name already exists in this project");
         }
 
-        Tag tag = new Tag();
-        tag.setName(createTagDTO.getName());
-        tag.setProject(projectOptional.get());
+        Tag tag = new Tag.TagBuilder()
+                .name(createTagDTO.getName())
+                .project(projectOptional.get())
+                .build();
 
         Tag savedTag = tagRepository.save(tag);
 
