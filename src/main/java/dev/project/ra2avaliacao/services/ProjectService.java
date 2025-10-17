@@ -147,21 +147,22 @@ public class ProjectService {
             throw new RuntimeException("User does not have permission to manage roles in this project");
         }
 
-        Optional<ProjectParticipant> participantOptional = projectParticipantRepository.findByProjectIdAndUserId(projectId, participantUserId);
-
-        if (participantOptional.isEmpty()) {
-            throw new RuntimeException("Participant not found in this project");
-        }
-
-        ProjectParticipant participant = participantOptional.get();
+        ProjectParticipant participant = projectParticipantRepository
+            .findByProjectIdAndUserId(projectId, participantUserId)
+            .orElseThrow(() -> new RuntimeException("Participant not found in this project"));
 
         if (participant.getRole() == ParticipantRole.CREATOR) {
             throw new RuntimeException("Cannot change the role of the project creator");
         }
 
-        participant.setRole(updateRoleDTO.getRole());
-        ProjectParticipant updatedParticipant = projectParticipantRepository.save(participant);
+        // Aplica o padrão State aqui 👇
+        if (updateRoleDTO.getRole() == ParticipantRole.ADMIN) {
+            participant.promote();
+        } else if (updateRoleDTO.getRole() == ParticipantRole.MEMBER) {
+            participant.demote();
+        }
 
+        ProjectParticipant updatedParticipant = projectParticipantRepository.save(participant);
         return convertToParticipantDTO(updatedParticipant);
     }
 

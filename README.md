@@ -1,286 +1,237 @@
-# RA2 Avaliação - Sistema de Gerenciamento de Projetos Kanban
+# RA2 Avaliação - Sistema de Gerenciamento de Projetos
 
-## 📋 Sobre o Projeto
+## 📋 Descrição do Projeto
 
-RA2 Avaliação é uma aplicação web desenvolvida em Spring Boot que implementa um sistema completo de gerenciamento de projetos estilo Kanban. O sistema permite que usuários criem projetos colaborativos, organizem tarefas em colunas customizáveis e gerenciem equipes com diferentes níveis de permissão.
+Este é um sistema de gerenciamento de projetos desenvolvido em Spring Boot que implementa funcionalidades de colaboração em equipe, organizando o trabalho através de projetos, colunas e cartões (similar ao Trello/Kanban). O projeto demonstra a aplicação de padrões de design, incluindo **Builder**, **Strategy** e **State**.
+
+## 🏗️ Arquitetura e Padrões de Design
+
+### 1. Padrão Builder
+Utilizado na criação de entidades complexas como `Project`, `User`, `Card` e `Column`, proporcionando uma interface fluente e flexível para construção de objetos.
+
+### 2. Padrão Strategy
+Implementado no sistema de permissões através das classes:
+- `PermissionStrategy` (interface)
+- `CreatorPermissionStrategy`
+- `AdminPermissionStrategy` 
+- `MemberPermissionStrategy`
+- `PermissionStrategyFactory`
+
+### 3. Padrão State (Implementação Recente)
+Aplicado na gestão de papéis (roles) dos participantes do projeto:
+- `ParticipantState` (interface)
+- `CreatorState` - Estado para criadores do projeto
+- `AdminState` - Estado para administradores
+- `MemberState` - Estado para membros básicos
+
+O padrão State controla as transições entre diferentes níveis de permissão, encapsulando as regras de promoção e rebaixamento de usuários.
 
 ## 🚀 Tecnologias Utilizadas
 
-- **Java 24** - Linguagem de programação principal
-- **Spring Boot 3.5.6** - Framework principal
+- **Java 24**
+- **Spring Boot 3.5.6**
 - **Spring Security** - Autenticação e autorização
 - **Spring Data JPA** - Persistência de dados
-- **Spring Validation** - Validação de dados
-- **PostgreSQL** - Banco de dados relacional
-- **Lombok** - Redução de código boilerplate
-- **Docker Compose** - Containerização do banco de dados
-- **Gradle** - Gerenciamento de dependências e build
+- **PostgreSQL** - Banco de dados
+- **Lombok** - Redução de boilerplate
+- **Gradle** - Gerenciamento de dependências
+- **Docker** - Containerização
 
-## 🏗️ Arquitetura do Sistema
-
-O projeto segue uma arquitetura em camadas bem definida:
-
-```
-src/main/java/dev/project/ra2avaliacao/
-├── Ra2AvaliacaoApplication.java     # Classe principal da aplicação
-├── config/                          # Configurações de segurança e filtros
-│   ├── SecurityConfig.java
-│   └── SessionAuthFilter.java
-├── controllers/                     # Controladores REST
-│   ├── AuthController.java
-│   ├── CardController.java
-│   ├── ColumnController.java
-│   ├── ProjectController.java
-│   ├── TagController.java
-│   └── UserController.java
-├── dtos/                           # Data Transfer Objects
-│   ├── auth/
-│   ├── card/
-│   ├── column/
-│   ├── project/
-│   ├── tag/
-│   └── user/
-├── models/                         # Entidades JPA
-│   ├── Card.java
-│   ├── CardTags.java
-│   ├── CardTagsId.java
-│   ├── Column.java
-│   ├── ParticipantRole.java
-│   ├── Project.java
-│   ├── ProjectParticipant.java
-│   ├── Session.java
-│   ├── Tag.java
-│   └── User.java
-├── repositories/                   # Repositórios JPA
-├── services/                      # Lógica de negócio
-└── strategies/                    # Padrões de estratégia
-```
-
-## 📊 Modelo de Dados
+## 📊 Estrutura do Banco de Dados
 
 ### Entidades Principais
 
-#### **User (Usuário)**
-- `id`: UUID (Primary Key)
-- `name`: Nome do usuário
-- `email`: Email único do usuário
-- `password`: Senha criptografada
-- `createdAt`/`updatedAt`: Timestamps automáticos
+1. **User** - Usuários do sistema
+   - `id`, `name`, `email`, `password`
+   - Timestamps de criação e atualização
 
-#### **Project (Projeto)**
-- `id`: UUID (Primary Key)
-- `name`: Nome do projeto
-- `description`: Descrição opcional
-- `createdAt`/`updatedAt`: Timestamps automáticos
+2. **Project** - Projetos colaborativos
+   - `id`, `name`, `description`
+   - Timestamps de criação e atualização
 
-#### **ProjectParticipant (Participante do Projeto)**
-- `id`: UUID (Primary Key)
-- `project`: Referência ao projeto
-- `user`: Referência ao usuário
-- `role`: Papel do usuário (CREATOR, ADMIN, MEMBER)
-- `createdAt`/`updatedAt`: Timestamps automáticos
+3. **ProjectParticipant** - Relacionamento usuário-projeto
+   - `id`, `project_id`, `user_id`, `role`
+   - Papéis: CREATOR, ADMIN, MEMBER
+   - **Inclui implementação do padrão State**
 
-#### **Column (Coluna)**
-- `id`: UUID (Primary Key)
-- `name`: Nome da coluna
-- `project`: Referência ao projeto
-- `position`: Posição da coluna no board
-- `cards`: Lista de cartões da coluna
-- `createdAt`/`updatedAt`: Timestamps automáticos
+4. **Column** - Colunas do quadro Kanban
+   - `id`, `name`, `project_id`, `position`
+   - Ordenação por posição
 
-#### **Card (Cartão)**
-- `id`: UUID (Primary Key)
-- `title`: Título do cartão
-- `content`: Conteúdo/descrição do cartão
-- `column`: Referência à coluna
-- `cardTags`: Tags associadas ao cartão
-- `createdAt`/`updatedAt`: Timestamps automáticos
+5. **Card** - Cartões/tarefas
+   - `id`, `title`, `content`, `column_id`
+   - Timestamps de criação e atualização
 
-#### **Tag (Etiqueta)**
-- `id`: UUID (Primary Key)
-- `name`: Nome da tag
-- `project`: Referência ao projeto
-- `createdAt`/`updatedAt`: Timestamps automáticos
+6. **Tag** - Etiquetas para organização
+   - `id`, `name`, `color`
 
-#### **CardTags (Relacionamento Cartão-Tag)**
-- Tabela de relacionamento many-to-many entre Card e Tag
-- Utiliza chave composta via `CardTagsId`
+7. **CardTags** - Relacionamento cartão-etiqueta
+   - Chave composta: `card_id`, `tag_id`
 
-## 🔧 Funcionalidades Implementadas
+8. **Session** - Sessões de autenticação
+   - `id`, `user_id`, `token`, `expires_at`
 
-### 🔐 Sistema de Autenticação
-- **Login de usuários** com validação de credenciais
-- **Autenticação baseada em sessões** com filtro customizado
-- **Criptografia de senhas** usando BCrypt
-- **Controle de acesso** por endpoints protegidos
+## 🔐 Sistema de Permissões
 
-### 👥 Gerenciamento de Usuários
-- **Criação de novos usuários** com validação de dados
-- **Listagem de usuários** do sistema
-- **Busca de usuário por ID**
-- **Atualização de perfil** do usuário autenticado
-- **Exclusão de conta** do usuário
+### Hierarquia de Papéis
+1. **CREATOR** - Criador do projeto
+   - Todas as permissões
+   - Não pode ser promovido ou rebaixado
+   - Pode deletar o projeto
 
-### 📁 Gerenciamento de Projetos
-- **Criação de projetos** com usuário como criador automático
-- **Listagem de todos os projetos** do usuário autenticado
-- **Busca de projeto específico** com validação de permissões
-- **Atualização de projetos** (apenas para criadores/admins)
-- **Exclusão de projetos** (apenas para criadores)
-- **Sistema de participantes** com três níveis de acesso:
-  - **CREATOR**: Controle total do projeto
-  - **ADMIN**: Pode gerenciar participantes e conteúdo
-  - **MEMBER**: Pode visualizar e editar conteúdo
+2. **ADMIN** - Administrador
+   - Pode gerenciar participantes
+   - Pode editar projeto
+   - Pode ser rebaixado para MEMBER
 
-### 📋 Sistema Kanban - Colunas
-- **Criação de colunas** em projetos específicos
-- **Atualização de colunas** com validação de permissões
-- **Reordenação de colunas** com controle de posição
-- **Exclusão de colunas** com todas as dependências
-- **Controle de posicionamento** automático das colunas
+3. **MEMBER** - Membro básico
+   - Acesso limitado ao projeto
+   - Pode ser promovido para ADMIN
 
-### 🃏 Gerenciamento de Cartões
-- **Criação de cartões** em colunas específicas
-- **Visualização de cartões** individuais ou por coluna
-- **Atualização completa** de título e conteúdo
-- **Exclusão de cartões** com limpeza de relacionamentos
-- **Sistema de tags** para categorização:
-  - Associação de tags a cartões
-  - Remoção de tags de cartões
-  - Validação de permissões para operações
-
-### 🏷️ Sistema de Tags
-- **Criação de tags** por projeto
-- **Busca de tags** por ID com validação de acesso
-- **Atualização de tags** existentes
-- **Exclusão de tags** com limpeza de relacionamentos
-- **Listagem de tags** por projeto
-
-### 🛡️ Sistema de Segurança e Validações
-- **Filtro de autenticação customizado** (`SessionAuthFilter`)
-- **Validação de permissões** em todas as operações
-- **Controle de acesso baseado em papéis** de participantes
-- **Validação de dados** com Bean Validation
-- **Tratamento de exceções** com códigos HTTP apropriados
-
-## ⚙️ Configuração e Instalação
-
-### Pré-requisitos
-- Java 24 ou superior
-- Docker e Docker Compose
-- Gradle (incluído via wrapper)
-
-### Configuração do Banco de Dados
-
-1. **Inicie o PostgreSQL via Docker:**
-```bash
-docker-compose up -d
+### Implementação com Padrão State
+```java
+// Exemplo de uso do padrão State
+participant.promote(); // Transição de estado controlada pela própria classe
+participant.demote();  // Regras encapsuladas nos estados concretos
 ```
 
-2. **Configurações do banco** (application.yml):
-- **URL**: `jdbc:postgresql://localhost:5432/ra2_avaliacao`
-- **Usuário**: `postgres`
-- **Senha**: `postgres`
-- **DDL**: `update` (criação automática de tabelas)
+## 🛠️ Funcionalidades Principais
 
-### Executando a Aplicação
+### 👥 Gestão de Usuários
+- Registro e autenticação
+- Perfis de usuário
+- Sistema de sessões
 
-1. **Clone o repositório**
-2. **Execute o banco de dados:**
-```bash
-docker-compose up -d
-```
+### 📁 Gestão de Projetos
+- **Criar projeto** - Usuário se torna CREATOR automaticamente
+- **Visualizar projetos** - Lista projetos do usuário
+- **Editar projeto** - Apenas CREATOR e ADMIN
+- **Deletar projeto** - Apenas CREATOR
+- **Gerenciar participantes** - Adicionar, remover, alterar papéis
 
-3. **Execute a aplicação:**
-```bash
-./gradlew bootRun
-```
+### 📋 Sistema Kanban
+- **Colunas** - Criar, editar, reordenar, deletar
+- **Cartões** - Criar, editar, mover entre colunas, deletar
+- **Tags** - Criar, aplicar aos cartões, filtrar
 
-4. **A aplicação estará disponível em:** `http://localhost:8080`
+### 🔄 Gestão de Participantes (com Padrão State)
+- **Adicionar participantes** - Entram como MEMBER
+- **Promover usuários** - MEMBER → ADMIN
+- **Rebaixar usuários** - ADMIN → MEMBER
+- **Remover participantes** - Exceto CREATOR
 
 ## 📡 API Endpoints
 
 ### Autenticação
-- `POST /auth/login` - Login do usuário
+```
+POST /auth/login          # Login do usuário
+POST /auth/logout         # Logout do usuário
+```
 
 ### Usuários
-- `POST /users` - Criar usuário
-- `GET /users` - Listar todos os usuários
-- `GET /users/{id}` - Buscar usuário por ID
-- `PUT /users` - Atualizar usuário atual
-- `DELETE /users` - Excluir usuário atual
+```
+GET  /users               # Listar usuários
+POST /users               # Criar usuário
+PUT  /users/{id}          # Atualizar usuário
+```
 
 ### Projetos
-- `POST /projects` - Criar projeto
-- `GET /projects` - Listar projetos do usuário
-- `GET /projects/{id}` - Buscar projeto específico
-- `PUT /projects/{id}` - Atualizar projeto
-- `DELETE /projects/{id}` - Excluir projeto
-
-### Participantes
-- `POST /projects/{projectId}/participants` - Adicionar participante
-- `PATCH /projects/{projectId}/participants/{userId}/role` - Atualizar papel
-- `DELETE /projects/{projectId}/participants/{userId}` - Remover participante
+```
+GET    /projects                           # Listar projetos do usuário
+POST   /projects                           # Criar projeto
+GET    /projects/{id}                      # Detalhes do projeto
+PUT    /projects/{id}                      # Atualizar projeto
+DELETE /projects/{id}                      # Deletar projeto
+POST   /projects/{id}/participants         # Adicionar participante
+PUT    /projects/{id}/participants/{userId} # Alterar papel (usa padrão State)
+DELETE /projects/{id}/participants/{userId} # Remover participante
+```
 
 ### Colunas
-- `POST /columns/project/{projectId}` - Criar coluna
-- `PUT /columns/{columnId}` - Atualizar coluna
-- `PATCH /columns/{columnId}/position` - Reordenar coluna
-- `DELETE /columns/{columnId}` - Excluir coluna
+```
+GET    /projects/{projectId}/columns       # Listar colunas
+POST   /projects/{projectId}/columns       # Criar coluna
+PUT    /columns/{id}                       # Atualizar coluna
+DELETE /columns/{id}                       # Deletar coluna
+PUT    /columns/{id}/reorder               # Reordenar colunas
+```
 
 ### Cartões
-- `POST /cards/column/{columnId}` - Criar cartão
-- `GET /cards/{cardId}` - Buscar cartão
-- `GET /cards/column/{columnId}` - Listar cartões da coluna
-- `PUT /cards/{cardId}` - Atualizar cartão
-- `DELETE /cards/{cardId}` - Excluir cartão
-- `POST /cards/{cardId}/tags/{tagId}` - Associar tag
-- `DELETE /cards/{cardId}/tags/{tagId}` - Remover tag
+```
+GET    /columns/{columnId}/cards           # Listar cartões
+POST   /columns/{columnId}/cards           # Criar cartão
+PUT    /cards/{id}                         # Atualizar cartão
+DELETE /cards/{id}                         # Deletar cartão
+PUT    /cards/{id}/move                    # Mover cartão
+```
 
 ### Tags
-- `POST /tags` - Criar tag
-- `GET /tags/{id}` - Buscar tag
-- `PUT /tags/{id}` - Atualizar tag
-- `DELETE /tags/{id}` - Excluir tag
-- `GET /tags/project/{projectId}` - Listar tags do projeto
+```
+GET    /tags                               # Listar tags
+POST   /tags                               # Criar tag
+PUT    /tags/{id}                          # Atualizar tag
+DELETE /tags/{id}                          # Deletar tag
+```
 
-## 🎯 Características Técnicas
+## 🔧 Configuração e Execução
 
-### Padrões Implementados
-- **Repository Pattern** - Abstração da camada de dados
-- **DTO Pattern** - Transferência segura de dados
-- **Strategy Pattern** - Implementação flexível de algoritmos
-- **MVC Architecture** - Separação clara de responsabilidades
+### Pré-requisitos
+- Java 24+
+- PostgreSQL
+- Docker (opcional)
 
-### Segurança
-- **Autenticação baseada em sessões**
-- **Controle de acesso granular** por recurso
-- **Validação de permissões** em tempo de execução
-- **Criptografia de senhas** com BCrypt
-- **Proteção contra CSRF** desabilitada para APIs REST
+### Configuração do Banco
+```yaml
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ra2_avaliacao
+    username: postgres
+    password: postgres
+```
 
-### Performance e Qualidade
-- **Lazy Loading** nas relações JPA
-- **Timestamps automáticos** com Hibernate
-- **Validação de dados** com Bean Validation
-- **Lombok** para redução de código boilerplate
-- **UUID** como chaves primárias para escalabilidade
+### Executar com Docker
+```bash
+docker-compose up -d
+```
 
-## 📈 Possíveis Extensões
+### Executar localmente
+```bash
+./gradlew bootRun
+```
 
-O sistema está preparado para futuras extensões como:
-- Sistema de notificações em tempo real
-- Upload de anexos nos cartões
-- Comentários nos cartões
-- Dashboard de métricas e relatórios
-- API de integração com ferramentas externas
-- Sistema de templates de projetos
-- Controle de versionamento de cartões
+## 📂 Estrutura do Projeto
 
-## 🤝 Contribuição
+```
+src/main/java/dev/project/ra2avaliacao/
+├── config/                    # Configurações de segurança
+├── controllers/               # Controllers REST
+├── dtos/                     # Data Transfer Objects
+├── models/                   # Entidades JPA
+├── repositories/             # Repositórios Spring Data
+├── services/                 # Lógica de negócio
+├── strategies/               # Padrão Strategy (Permissões)
+└── state/participant/        # Padrão State (Papéis)
+    ├── ParticipantState.java
+    ├── CreatorState.java
+    ├── AdminState.java
+    └── MemberState.java
+```
 
-Este projeto foi desenvolvido como parte de uma avaliação acadêmica (RA2) para o curso de Design de Software da PUCPR.
+## 🎯 Benefícios da Implementação do Padrão State
+
+1. **Encapsulamento de Regras**: Cada estado gerencia suas próprias regras de transição
+2. **Extensibilidade**: Fácil adição de novos estados sem modificar código existente
+3. **Manutenibilidade**: Elimina condicionais complexas no service
+4. **Aderência ao OCP**: Aberto para extensão, fechado para modificação
+
+## 🚀 Próximos Passos
+
+- [ ] Implementar notificações em tempo real
+- [ ] Adicionar sistema de comentários nos cartões
+- [ ] Implementar anexos de arquivos
+- [ ] Dashboard com métricas do projeto
+- [ ] API para integração com ferramentas externas
 
 ---
 
-**Desenvolvido com ❤️ usando Spring Boot**
+**Desenvolvido para a disciplina de Design de Software - PUCPR**
