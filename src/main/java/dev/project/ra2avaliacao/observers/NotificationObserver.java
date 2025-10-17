@@ -12,7 +12,6 @@ public class NotificationObserver implements Observer {
         if (data instanceof Card card) {
             String projectId = card.getColumn().getProject().getId();
 
-            // Simular envio de notificações baseado no tipo de evento
             switch (eventType) {
                 case "CARD_CREATED" -> notifyCardCreated(card, projectId);
                 case "CARD_UPDATED" -> notifyCardUpdated(card, projectId);
@@ -57,12 +56,5 @@ public class NotificationObserver implements Observer {
 
     private void sendNotificationToParticipants(String projectId, String message) {
         System.out.println("[NOTIFICATION] " + message + " (Projeto: " + projectId + ")");
-
-        // Implementação futura: buscar participantes do projeto e enviar notificações
-        // List<ProjectParticipant> participants = projectParticipantRepository.findByProjectId(projectId);
-        // for (ProjectParticipant participant : participants) {
-        //     emailService.sendNotification(participant.getUser().getEmail(), message);
-        //     pushNotificationService.send(participant.getUser().getId(), message);
-        // }
     }
 }

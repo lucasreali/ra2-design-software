@@ -5,20 +5,20 @@ import dev.project.ra2avaliacao.models.User;
 import dev.project.ra2avaliacao.repositories.ProjectRepository;
 import dev.project.ra2avaliacao.repositories.UserRepository;
 import dev.project.ra2avaliacao.strategies.PermissionStrategy;
-import dev.project.ra2avaliacao.strategies.PermissionStrategyFactory;
+import dev.project.ra2avaliacao.strategies.PermissionStrategyContext;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ProjectPermissionValidator {
 
-    private final PermissionStrategyFactory strategyFactory;
+    private final PermissionStrategyContext strategyContext;
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
 
-    public ProjectPermissionValidator(PermissionStrategyFactory strategyFactory,
-                                     ProjectRepository projectRepository,
-                                     UserRepository userRepository) {
-        this.strategyFactory = strategyFactory;
+    public ProjectPermissionValidator(PermissionStrategyContext strategyFactory,
+                                      ProjectRepository projectRepository,
+                                      UserRepository userRepository) {
+        this.strategyContext = strategyFactory;
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
     }
@@ -30,7 +30,7 @@ public class ProjectPermissionValidator {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        PermissionStrategy strategy = strategyFactory.getStrategy(requiredRole);
+        PermissionStrategy strategy = strategyContext.getStrategy(requiredRole);
         return strategy.hasAccess(user, project);
     }
 

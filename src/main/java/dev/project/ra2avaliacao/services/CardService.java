@@ -29,7 +29,6 @@ public class CardService {
     private final TagRepository tagRepository;
     private final ProjectPermissionValidator permissionValidator;
 
-    // Implementação do padrão Observer
     private final CardSubject cardSubject = new CardSubject();
 
     public CardService(CardRepository cardRepository, ProjectPermissionValidator permissionValidator,
@@ -42,7 +41,6 @@ public class CardService {
         this.cardTagsRepository = cardTagsRepository;
         this.tagRepository = tagRepository;
 
-        // Registrar todos os observadores
         this.cardSubject.attach(projectMetricsObserver);
         this.cardSubject.attach(cardAuditObserver);
         this.cardSubject.attach(notificationObserver);
@@ -67,7 +65,6 @@ public class CardService {
         Card newCard = cardBuilder.build();
         Card savedCard = cardRepository.save(newCard);
 
-        // Notificar observadores sobre a criação do card
         cardSubject.notifyObservers("CARD_CREATED", savedCard);
 
         return convertToResponseDto(savedCard);
@@ -116,7 +113,6 @@ public class CardService {
 
         Card updatedCard = cardRepository.save(existingCard);
 
-        // Notificar observadores sobre a atualização do card
         cardSubject.notifyObservers("CARD_UPDATED", updatedCard);
 
         return convertToResponseDto(updatedCard);
@@ -149,7 +145,6 @@ public class CardService {
             throw new RuntimeException("User does not have permission to edit this project");
         }
 
-        // Verificar se a nova coluna pertence ao mesmo projeto
         if (!newColumn.getProject().getId().equals(projectId)) {
             throw new RuntimeException("Cannot move card to a column from a different project");
         }
@@ -157,7 +152,6 @@ public class CardService {
         card.setColumn(newColumn);
         Card movedCard = cardRepository.save(card);
 
-        // Notificar observadores sobre a movimentação do card
         cardSubject.notifyObservers("CARD_MOVED", movedCard);
 
         return convertToResponseDto(movedCard);
@@ -175,12 +169,10 @@ public class CardService {
         Tag tag = tagRepository.findById(tagId)
                 .orElseThrow(() -> new RuntimeException("Tag not found"));
 
-        // Verificar se a tag pertence ao mesmo projeto do card
         if (!tag.getProject().getId().equals(projectId)) {
             throw new RuntimeException("Tag does not belong to the same project as the card");
         }
 
-        // Verificar se a tag já está atribuída ao card
         CardTagsId cardTagsId = new CardTagsId(cardId, tagId);
         if (cardTagsRepository.existsById(cardTagsId)) {
             throw new RuntimeException("Tag is already assigned to this card");

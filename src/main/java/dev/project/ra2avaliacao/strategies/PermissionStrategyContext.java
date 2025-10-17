@@ -7,11 +7,11 @@ import java.util.List;
 import java.util.Map;
 
 @Component
-public class PermissionStrategyFactory {
+public class PermissionStrategyContext {
 
     private final Map<String, PermissionStrategy> strategies;
 
-    public PermissionStrategyFactory(List<PermissionStrategy> permissionStrategies) {
+    public PermissionStrategyContext(List<PermissionStrategy> permissionStrategies) {
         this.strategies = new HashMap<>();
         for (PermissionStrategy strategy : permissionStrategies) {
             strategies.put(strategy.getStrategyName(), strategy);
