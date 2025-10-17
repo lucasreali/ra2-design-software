@@ -58,6 +58,18 @@ public class CardController {
         return ResponseEntity.noContent().build();
     }
 
+    @PutMapping("/{cardId}/move/{newColumnId}")
+    public ResponseEntity<CardResponseDTO> moveCard(@PathVariable String cardId,
+                                                   @PathVariable String newColumnId,
+                                                   @AuthenticationPrincipal User user) {
+        try {
+            CardResponseDTO cardResponseDTO = cardService.moveCard(cardId, newColumnId, user.getId());
+            return ResponseEntity.ok(cardResponseDTO);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+    }
+
     @PostMapping("/{cardId}/tags/{tagId}")
     public ResponseEntity<Void> assignTag(@PathVariable String cardId,
                                          @PathVariable String tagId,

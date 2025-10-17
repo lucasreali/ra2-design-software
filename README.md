@@ -2,7 +2,7 @@
 
 ## 📋 Descrição do Projeto
 
-Este é um sistema de gerenciamento de projetos desenvolvido em Spring Boot que implementa funcionalidades de colaboração em equipe, organizando o trabalho através de projetos, colunas e cartões (similar ao Trello/Kanban). O projeto demonstra a aplicação de padrões de design, incluindo **Builder**, **Strategy** e **State**.
+Este é um sistema de gerenciamento de projetos desenvolvido em Spring Boot que implementa funcionalidades de colaboração em equipe, organizando o trabalho através de projetos, colunas e cartões (similar ao Trello/Kanban). O projeto demonstra a aplicação de padrões de design, incluindo **Builder**, **Strategy**, **State** e **Observer**.
 
 ## 🏗️ Arquitetura e Padrões de Design
 
@@ -17,7 +17,7 @@ Implementado no sistema de permissões através das classes:
 - `MemberPermissionStrategy`
 - `PermissionStrategyFactory`
 
-### 3. Padrão State (Implementação Recente)
+### 3. Padrão State
 Aplicado na gestão de papéis (roles) dos participantes do projeto:
 - `ParticipantState` (interface)
 - `CreatorState` - Estado para criadores do projeto
@@ -25,6 +25,33 @@ Aplicado na gestão de papéis (roles) dos participantes do projeto:
 - `MemberState` - Estado para membros básicos
 
 O padrão State controla as transições entre diferentes níveis de permissão, encapsulando as regras de promoção e rebaixamento de usuários.
+
+### 4. Padrão Observer (Nova Implementação)
+Aplicado para notificar automaticamente sobre eventos relacionados aos cartões:
+
+#### Estrutura do Observer:
+```
+src/main/java/dev/project/ra2avaliacao/observers/
+├── Observer.java              # Interface base
+├── Subject.java               # Interface do sujeito observável
+├── CardSubject.java           # Implementação concreta do sujeito
+├── ProjectMetricsObserver.java # Observer para métricas do projeto
+├── CardAuditObserver.java     # Observer para auditoria
+└── NotificationObserver.java  # Observer para notificações
+```
+
+#### Eventos Observáveis:
+- `CARD_CREATED` - Criação de novos cartões
+- `CARD_UPDATED` - Atualização de cartões existentes
+- `CARD_DELETED` - Exclusão de cartões
+- `CARD_MOVED` - Movimentação entre colunas
+- `TAG_ASSIGNED` - Atribuição de tags
+- `TAG_REMOVED` - Remoção de tags
+
+#### Observadores Implementados:
+1. **ProjectMetricsObserver**: Coleta métricas e estatísticas do projeto
+2. **CardAuditObserver**: Registra logs de auditoria estruturados
+3. **NotificationObserver**: Envia notificações aos participantes
 
 ## 🚀 Tecnologias Utilizadas
 
@@ -61,6 +88,7 @@ O padrão State controla as transições entre diferentes níveis de permissão,
 5. **Card** - Cartões/tarefas
    - `id`, `title`, `content`, `column_id`
    - Timestamps de criação e atualização
+   - **Eventos observáveis através do padrão Observer**
 
 6. **Tag** - Etiquetas para organização
    - `id`, `name`, `color`
@@ -95,6 +123,21 @@ participant.promote(); // Transição de estado controlada pela própria classe
 participant.demote();  // Regras encapsuladas nos estados concretos
 ```
 
+## 🔔 Sistema de Observação de Eventos
+
+### Implementação do Padrão Observer
+```java
+// No CardService - automaticamente notifica observadores
+cardSubject.notifyObservers("CARD_CREATED", savedCard);
+cardSubject.notifyObservers("CARD_MOVED", movedCard);
+```
+
+### Benefícios do Observer:
+- **Desacoplamento**: Observadores independentes do CardService
+- **Extensibilidade**: Novos observadores podem ser adicionados facilmente
+- **Responsabilidade única**: Cada observador tem uma função específica
+- **Notificações automáticas**: Eventos são propagados automaticamente
+
 ## 🛠️ Funcionalidades Principais
 
 ### 👥 Gestão de Usuários
@@ -109,9 +152,12 @@ participant.demote();  // Regras encapsuladas nos estados concretos
 - **Deletar projeto** - Apenas CREATOR
 - **Gerenciar participantes** - Adicionar, remover, alterar papéis
 
-### 📋 Sistema Kanban
+### 📋 Sistema Kanban (com Observer)
 - **Colunas** - Criar, editar, reordenar, deletar
 - **Cartões** - Criar, editar, mover entre colunas, deletar
+  - **Eventos observáveis**: Cada operação gera notificações automáticas
+  - **Métricas em tempo real**: Coleta automática de estatísticas
+  - **Auditoria completa**: Log de todas as ações
 - **Tags** - Criar, aplicar aos cartões, filtrar
 
 ### 🔄 Gestão de Participantes (com Padrão State)
@@ -156,13 +202,16 @@ DELETE /columns/{id}                       # Deletar coluna
 PUT    /columns/{id}/reorder               # Reordenar colunas
 ```
 
-### Cartões
+### Cartões (com Observer)
 ```
-GET    /columns/{columnId}/cards           # Listar cartões
-POST   /columns/{columnId}/cards           # Criar cartão
-PUT    /cards/{id}                         # Atualizar cartão
-DELETE /cards/{id}                         # Deletar cartão
-PUT    /cards/{id}/move                    # Mover cartão
+GET    /cards/column/{columnId}            # Listar cartões
+POST   /cards/column/{columnId}            # Criar cartão (→ observadores notificados)
+GET    /cards/{id}                         # Detalhes do cartão
+PUT    /cards/{id}                         # Atualizar cartão (→ observadores notificados)
+DELETE /cards/{id}                         # Deletar cartão (→ observadores notificados)
+PUT    /cards/{id}/move/{columnId}         # Mover cartão (→ observadores notificados)
+POST   /cards/{id}/tags/{tagId}            # Atribuir tag (→ observadores notificados)
+DELETE /cards/{id}/tags/{tagId}            # Remover tag (→ observadores notificados)
 ```
 
 ### Tags
@@ -207,6 +256,13 @@ src/main/java/dev/project/ra2avaliacao/
 ├── controllers/               # Controllers REST
 ├── dtos/                     # Data Transfer Objects
 ├── models/                   # Entidades JPA
+├── observers/                # Padrão Observer (NOVO)
+│   ├── Observer.java
+│   ├── Subject.java
+│   ├── CardSubject.java
+│   ├── ProjectMetricsObserver.java
+│   ├── CardAuditObserver.java
+│   └── NotificationObserver.java
 ├── repositories/             # Repositórios Spring Data
 ├── services/                 # Lógica de negócio
 ├── strategies/               # Padrão Strategy (Permissões)
@@ -217,19 +273,30 @@ src/main/java/dev/project/ra2avaliacao/
     └── MemberState.java
 ```
 
-## 🎯 Benefícios da Implementação do Padrão State
+## 🎯 Benefícios dos Padrões Implementados
 
+### Padrão State
 1. **Encapsulamento de Regras**: Cada estado gerencia suas próprias regras de transição
 2. **Extensibilidade**: Fácil adição de novos estados sem modificar código existente
 3. **Manutenibilidade**: Elimina condicionais complexas no service
-4. **Aderência ao OCP**: Aberto para extensão, fechado para modificação
+
+### Padrão Observer
+1. **Desacoplamento**: Observadores independentes da lógica de negócio
+2. **Extensibilidade**: Novos observadores podem ser adicionados sem modificar código existente
+3. **Notificações automáticas**: Eventos são propagados sem intervenção manual
+4. **Responsabilidade única**: Cada observador tem função específica
+
+### Ambos seguem o princípio OCP (Open/Closed Principle)
+- **Aberto para extensão**: Novos estados/observadores podem ser adicionados
+- **Fechado para modificação**: Código existente não precisa ser alterado
 
 ## 🚀 Próximos Passos
 
-- [ ] Implementar notificações em tempo real
-- [ ] Adicionar sistema de comentários nos cartões
-- [ ] Implementar anexos de arquivos
-- [ ] Dashboard com métricas do projeto
+- [ ] Implementar persistência dos logs de auditoria
+- [ ] Adicionar notificações em tempo real via WebSocket
+- [ ] Implementar sistema de comentários nos cartões
+- [ ] Dashboard com métricas coletadas pelos observadores
+- [ ] Sistema de relatórios baseado nos dados de auditoria
 - [ ] API para integração com ferramentas externas
 
 ---
